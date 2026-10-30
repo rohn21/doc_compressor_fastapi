@@ -9,7 +9,7 @@ dependencies = [
     "uvicorn[standard]",
     "pydantic",
     "pydantic-settings",
-    "sqlalchemy",
+    "sqlalchemy[asyncio]",
     "alembic",
     "asyncpg",
     "psycopg[binary]",
@@ -28,6 +28,7 @@ dev = [
     "pytest-cov",
     "pytest-asyncio",
     "httpx",
+    "aiosqlite>=0.22.1",
 ]
 
 [tool.ruff]
