@@ -17,10 +17,21 @@ def test_registry_lookup_by_format() -> None:
     assert isinstance(engine_png, ImageCompressionEngine)
 
 
-def test_registry_lookup_by_data(sample_rgb_bytes: bytes) -> None:
+def test_registry_lookup_by_data(
+    sample_rgb_bytes: bytes,
+    sample_text_pdf_bytes: bytes,
+) -> None:
+    from app.engines.pdf.processor import PDFCompressionEngine
+
     registry = get_engine_registry()
-    engine = registry.get_engine_for_data(sample_rgb_bytes)
-    assert isinstance(engine, ImageCompressionEngine)
+    engine_img = registry.get_engine_for_data(sample_rgb_bytes)
+    assert isinstance(engine_img, ImageCompressionEngine)
+
+    engine_pdf = registry.get_engine_for_data(sample_text_pdf_bytes)
+    assert isinstance(engine_pdf, PDFCompressionEngine)
+
+    engine_pdf_fmt = registry.get_engine_for_format("pdf")
+    assert isinstance(engine_pdf_fmt, PDFCompressionEngine)
 
 
 def test_registry_unsupported_format() -> None:

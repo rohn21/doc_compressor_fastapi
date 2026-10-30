@@ -26,6 +26,14 @@ class DecompressionBombError(CompressionError):
     """Raised when an image exceeds safe dimensions or pixel count."""
 
 
+class EncryptedPDFError(CompressionError):
+    """Raised when a PDF is encrypted with a password and cannot be read."""
+
+
+class CorruptPDFError(CompressionError):
+    """Raised when PDF data cannot be opened or is severely corrupt."""
+
+
 class TargetSizeUnachievableError(CompressionError):
     """Raised when target file size cannot be achieved within safe quality/dimension bounds."""
 

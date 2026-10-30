@@ -71,3 +71,97 @@ def sample_smartphone_photo_bytes() -> bytes:
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=95)
     return buf.getvalue()
+
+
+@pytest.fixture
+def sample_text_pdf_bytes() -> bytes:
+    """Generate a multi-page vector and text PDF without raster images."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    for i in range(3):
+        page = doc.new_page(width=595, height=842)
+        page.insert_text((50, 50), f"Page {i + 1} Document Title", fontsize=16)
+        page.draw_rect(pymupdf.Rect(50, 100, 500, 250), color=(0, 0, 1), fill=(0.95, 0.95, 0.95))
+        page.insert_textbox(
+            pymupdf.Rect(60, 110, 490, 240),
+            "This is a high quality vector PDF containing crisp text, vector lines, "
+            "and structural elements. Compression should optimize streams without rasterizing.",
+        )
+    data = doc.tobytes()
+    doc.close()
+    return data
+
+
+@pytest.fixture
+def sample_image_pdf_bytes(sample_rgb_bytes: bytes) -> bytes:
+    """Generate a PDF containing high-resolution embedded images."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=595, height=842)
+    page.insert_text((50, 50), "Document with Embedded Photos", fontsize=14)
+    # Insert image twice onto page
+    page.insert_image(pymupdf.Rect(50, 100, 350, 325), stream=sample_rgb_bytes)
+    page.insert_image(pymupdf.Rect(50, 350, 350, 575), stream=sample_rgb_bytes)
+    data = doc.tobytes()
+    doc.close()
+    return data
+
+
+@pytest.fixture
+def sample_form_pdf_bytes() -> bytes:
+    """Generate an interactive AcroForm PDF."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=595, height=842)
+    page.insert_text((50, 50), "Application Form", fontsize=14)
+
+    widget = pymupdf.Widget()
+    widget.rect = pymupdf.Rect(50, 100, 250, 130)
+    widget.field_name = "ApplicantName"
+    widget.field_type = pymupdf.PDF_WIDGET_TYPE_TEXT
+    widget.field_value = "Jane Doe"
+    page.add_widget(widget)
+
+    data = doc.tobytes()
+    doc.close()
+    return data
+
+
+@pytest.fixture
+def sample_encrypted_pdf_bytes() -> bytes:
+    """Generate a password-protected encrypted PDF."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=595, height=842)
+    page.insert_text((50, 50), "Confidential Protected Content")
+    data = doc.tobytes(
+        encryption=pymupdf.PDF_ENCRYPT_AES_256,
+        user_pw="secret123",
+        owner_pw="master123",
+    )
+    doc.close()
+    return data
+
+
+@pytest.fixture
+def sample_signed_pdf_bytes() -> bytes:
+    """Generate a PDF with digital signature widget flags."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=595, height=842)
+    page.insert_text((50, 50), "Digitally Signed Contract")
+
+    widget = pymupdf.Widget()
+    widget.rect = pymupdf.Rect(50, 200, 250, 260)
+    widget.field_name = "DigitalSignature"
+    widget.field_type = pymupdf.PDF_WIDGET_TYPE_SIGNATURE
+    page.add_widget(widget)
+
+    data = doc.tobytes()
+    doc.close()
+    return data

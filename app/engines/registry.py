@@ -4,6 +4,7 @@ from app.engines.base import BaseCompressionEngine, ImageFormat
 from app.engines.exceptions import UnsupportedFormatError
 from app.engines.image.formats import detect_image_format, normalize_format
 from app.engines.image.processor import ImageCompressionEngine
+from app.engines.pdf.processor import PDFCompressionEngine
 
 
 class EngineRegistry:
@@ -16,6 +17,7 @@ class EngineRegistry:
     def _register_default_engines(self) -> None:
         """Register default engines."""
         self.register(ImageCompressionEngine())
+        self.register(PDFCompressionEngine())
 
     def register(self, engine: BaseCompressionEngine) -> None:
         """Register a compression engine."""
