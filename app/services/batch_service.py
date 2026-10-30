@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database.models import BatchCompressionJob, BatchStatus, JobStatus
+from app.database.models import BatchCompressionJob, BatchStatus, CompressionJob, JobStatus
 from app.schemas.batch import BatchCreate
 
 
@@ -49,12 +49,20 @@ class BatchService:
         batch_id: uuid.UUID,
     ) -> BatchCompressionJob | None:
         """Recalculate batch status, counts, and aggregate file sizes from its jobs."""
-        batch = await BatchService.get_batch(session, batch_id, load_jobs=True)
+        batch = await BatchService.get_batch(session, batch_id, load_jobs=False)
         if not batch:
             return None
 
-        jobs = batch.jobs
-        total = len(jobs)
+        # Query all jobs directly to avoid stale relationship caching in the identity map
+        stmt = (
+            select(CompressionJob)
+            .where(CompressionJob.batch_id == batch_id)
+            .order_by(CompressionJob.created_at)
+        )
+        result = await session.execute(stmt)
+        jobs = list(result.scalars().all())
+
+        total = max(batch.total_files or 0, len(jobs))
         completed = sum(1 for j in jobs if j.status == JobStatus.COMPLETED)
         failed = sum(1 for j in jobs if j.status == JobStatus.FAILED)
         processing = sum(1 for j in jobs if j.status == JobStatus.PROCESSING)
@@ -92,4 +100,6 @@ class BatchService:
             batch.status = BatchStatus.PENDING
 
         await session.flush()
+        # Expire jobs collection on batch instance so any relationship access refreshes
+        session.expire(batch, ["jobs"])
         return batch
